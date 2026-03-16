@@ -12,8 +12,8 @@ Does the shift from functional to identity-signaling language in social media di
 - **Idea:** Psycholinguistic Early-Warning Signals
 Move beyond post-facto sequence mining to predictive linguistics. The core hypothesis is that a "Diderot Spiral" is preceded by a measurable shift in Semantic Proximity: a consumer's language moves away from functional utility (e.g., "specs," "battery") and gravitates toward identity-cohesion (e.g., "aesthetic," "matching," "vibe"). We aim to quantify this "hedonic buildup" before it results in financial distress.
 -  **Data:** Strategic Dual-Corpus Comparison (Reddit)
-  - The "Spiral" Corpus: 10,000+ posts from high-entry-barrier hobbyist communities (e.g., r/MechanicalKeyboards, r/Audiophile, r/HomeDecor). These act as the "observation lab" for identity-driven consumption.
-  - The "Impact" Corpus: 10,000+ posts from financial recovery communities (e.g., r/ShoppingAddiction, r/Debt, r/PersonalFinance). This provides the "ground truth" for the negative financial consequences of the effect.
+    1. The "Spiral" Corpus: 10,000+ posts from high-entry-barrier hobbyist communities (e.g., r/MechanicalKeyboards, r/Audiophile, r/HomeDecor). These act as the "observation lab" for identity-driven consumption.
+    2. The "Impact" Corpus: 10,000+ posts from financial recovery communities (e.g., r/ShoppingAddiction, r/Debt, r/PersonalFinance). This provides the "ground truth" for the negative financial consequences of the effect.
 
 - **Tools:** Python NLP & Predictive Modeling
   The analysis will move through a three-stage Python pipeline:
