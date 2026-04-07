@@ -1,26 +1,62 @@
-# Diderot Validation Analysis: Beyond the Transaction
+# Empirical Validation of the Diderot Effect in Beauty Consumption
 
-### **Subtitle:** Using Sentiment Mining on Social Media to Identify Psycholinguistic Markers of the Diderot Effect in Consumer Spending Cascades.
+This repository contains the data pipeline and statistical analysis for a thesis investigating the **Diderot Effect** within the Amazon "All Beauty" category. The project uses Natural Language Processing (NLP) and purchase history modeling to prove that aesthetic triggers lead to a "spending spiral."
 
-### Project Overview
-This research investigates the Diderot Effect—a social phenomenon where obtaining a new possession creates a spiral of consumption—through the lens of Natural Language Processing (NLP). While previous studies have validated these purchase sequences using transactional data, this project focuses on the unstructured text of social media to identify the emotional and linguistic "early-warning signs" of financial risk.
+## Executive Summary of Findings
+* **Hypothesis 1 (Linguistic Shift):** Confirmed. After an aesthetic trigger, users show a **36.7% increase** in congruence-related language (e.g., "matching," "set," "harmony").
+* **Hypothesis 2 (Temporal Acceleration):** Confirmed. The inter-purchase interval ($\Delta T$) dropped from **144.14 days** to **82.17 days**.
+* **Predictive Link:** Lagged OLS Regression proves that aesthetic language is a statistically significant predictor ($p = 0.028$) of faster subsequent purchases.
 
-### Research Question
-Does the shift from functional to identity-signaling language in social media discourse serve as a predictive marker for a consumer entering a financially destabilizing Diderot spiral?
+---
 
-### The Three Building Blocks
-- **Idea:** Psycholinguistic Early-Warning Signals
-Move beyond post-facto sequence mining to predictive linguistics. The core hypothesis is that a "Diderot Spiral" is preceded by a measurable shift in Semantic Proximity: a consumer's language moves away from functional utility (e.g., "specs," "battery") and gravitates toward identity-cohesion (e.g., "aesthetic," "matching," "vibe"). We aim to quantify this "hedonic buildup" before it results in financial distress.
--  **Data:** Strategic Dual-Corpus Comparison (Reddit)
-    1. The "Spiral" Corpus: 10,000+ posts from high-entry-barrier hobbyist communities (e.g., r/MechanicalKeyboards, r/Audiophile, r/HomeDecor). These act as the "observation lab" for identity-driven consumption.
-    2. The "Impact" Corpus: 10,000+ posts from financial recovery communities (e.g., r/ShoppingAddiction, r/Debt, r/PersonalFinance). This provides the "ground truth" for the negative financial consequences of the effect.
+## Project Structure & File Descriptions
 
-- **Tools:** Python NLP & Predictive Modeling
-  The analysis will move through a three-stage Python pipeline:
-1. **Sentiment Dynamics (VADER & TextBlob):** To measure the "Emotional Arc"—tracking the high-arousal positive sentiment during the "spiral" phase versus the high-arousal negative sentiment (anxiety/regret) in the "impact" phase.
+### 1. Data Processing & Phase Identification
+* **`identify_triggers.py`**: The entry point of the pipeline. It standardizes timestamps and applies a "Phase Labeling" logic. It identifies the first instance where a user's review exceeds an aesthetic threshold ($S > 0.6$) and splits their history into **Utilitarian** (pre-trigger) and **Congruence** (post-trigger) phases.
+* **`calculate_velocity.py`**: Calculates the temporal distance between purchases. It groups data by `user_id` and uses a diffing function to find the number of days ($\Delta T$) between Review $N$ and Review $N-1$.
 
-2. **Thematic Foundation Modeling (Gensim LDA):** To automatically cluster topics and detect the moment a user’s discourse shifts from "Need-based" to "Set-completion" themes.
+### 2. Linguistic Analysis
+* **`content_analysis.py`**: Performs Automated Content Analysis. It uses regular expressions to count "Utilitarian" vs. "Congruence" markers in review text and aggregates the mean scores for the final thesis table.
+* **Word Embeddings (Logic)**: The dataset incorporates **Mixedbread-ai Transformer embeddings** to calculate the **Aesthetic Score ($S$)**, measuring the semantic similarity of reviews to a "Minimalist/Clean-Girl" aesthetic anchor.
 
-3. **Vector Space Analysis (SpaCy / Word2Vec):** To calculate the Cosine Similarity between anchor products (NER-identified) and "Luxury/Aesthetic" word clusters, creating a numeric "Risk Score" for each user.
+### 3. Statistical Validation
+* **`correlation_analysis.py`**: Runs a **Lagged Variable OLS Regression**. It tests if the language used in a previous purchase predicts the speed of the next purchase. This file generates the statistical proof for the "Diderot Spiral."
+
+### 4. Visualization & Reporting
+* **`visualize_diderot_results.py`**: Generates the primary charts for the thesis, including the Temporal Acceleration bar chart and the Linguistic Shift grouped bars.
+* [cite_start]**`diderot_thesis_results.pdf`**: A consolidated PDF report containing all major visualizations and the final summary table.
+* **`diderot_correlation_report.pdf`**: The formal output of the OLS Regression, showing coefficients, P-values, and significance levels.
+
+---
+
+##  Core Data Metrics
+| Metric | Utilitarian Phase | Congruence Phase | Change |
+| :--- | :--- | :--- | :--- |
+| **Purchase Interval ($\Delta T$)** | 144.14 Days  | 82.17 Days | **-43.0%** |
+| **Congruence Markers** | 0.147 | 0.201 | **+36.7%** |
+| **Aesthetic Score ($S$)** | 0.521  | 0.566  | **+8.6%** |
+
+---
+
+##  Technical Stack
+* **Language:** Python 3.13
+* **Data Manipulation:** `Pandas`, `NumPy`
+* **Statistical Modeling:** `Statsmodels` (OLS Regression)
+* **NLP:** `re` (Regex), `spaCy`, `Sentence-Transformers`
+* **Visualization:** `Matplotlib`, `Seaborn`
+
+## Methodology Note
+This project utilizes **Lagged Variable Analysis** to ensure directionality. By analyzing if language at $T_{n-1}$ predicts behavior at $T_{n}$, we establish that the psychological shift toward "Congruence" acts as a leading indicator for the increase in consumption velocity.
+
+# .env.example - Copy this to .env and add your keys
+MIXEDBREAD_API_KEY=your_key_here
 
 
+## 💻 How to Run the Analysis
+To replicate the results from the 15,000-row beauty dataset:
+
+1. **Clone the repo:** `https://github.com/SoniaMGN/diderot-validation-analysis`
+2. **Setup Environment:** ```bash
+   python3 -m venv diderot_venv
+   source diderot_venv/bin/activate
+   pip install -r requirements.txt
