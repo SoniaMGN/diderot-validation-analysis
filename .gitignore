@@ -206,5 +206,11 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 data/*.csv
+data/*.jsonl
 data/asin2category.json
-data/asin2category.json
+
+# Virtual environment
+diderot_venv/
+
+# Large raw source data
+data/Amazon_reviews_2023.csv

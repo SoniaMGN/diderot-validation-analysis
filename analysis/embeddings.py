@@ -1,52 +1,100 @@
-import pandas as pd
-from mixedbread import Mixedbread
+"""
+Stage 3: Compute aesthetic similarity scores for every review using the
+Mixedbread embedding API, then flag reviews that exceed the trigger threshold.
+"""
+
 import numpy as np
+import pandas as pd
+import logging
 import os
-
-# 1. Initialize
-mxbai = Mixedbread(api_key= os.getenv("EMBEDDING_API_KEY"))
-
-# 2. Define our "Aesthetic Anchor"
-anchor_text = "I bought this because it matches my current beauty routine and fits my vibe perfectly; it has that minimal, clean girl look that completes my collection and looks so good with my other viral products and nice packaging."
-
-print("Encoding Anchor and Reviews via Mixedbread...")
-
-# 3. Get the Anchor Embedding
-anchor_res = mxbai.embed(
-    model="mixedbread-ai/mxbai-embed-large-v1",
-    input=[anchor_text],
-    normalized=True,
-    encoding_format="float"
+from dotenv import load_dotenv
+from mixedbread import Mixedbread
+from constants import (
+    data_path,
+    EMBEDDING_MODEL,
+    EMBEDDING_BATCH_SIZE,
+    AESTHETIC_ANCHOR,
+    AESTHETIC_THRESHOLD,
 )
-anchor_vec = np.array(anchor_res.data[0].embedding)
 
-# 4. Load your sorted data
-df = pd.read_json("../data/diderot_final_sequence.jsonl", lines=True)
-texts = df['text'].fillna("").tolist()
+load_dotenv()
 
-# 5. Batch Process (Crucial for 14k rows)
-all_scores = []
-batch_size = 128
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
-for i in range(0, len(texts), batch_size):
-    batch = texts[i:i + batch_size]
-    res = mxbai.embed(
-        model="mixedbread-ai/mxbai-embed-large-v1",
-        input=batch,
+INPUT_FILE  = data_path("diderot_final_sequence.jsonl")
+OUTPUT_FILE = data_path("diderot_final_scored.jsonl")
+
+
+def get_anchor_embedding(client: Mixedbread) -> np.ndarray:
+    """Encode the aesthetic anchor text and return its embedding vector."""
+    res = client.embed(
+        model=EMBEDDING_MODEL,
+        input=[AESTHETIC_ANCHOR],
         normalized=True,
-        encoding_format="float"
+        encoding_format="float",
     )
-    batch_vecs = np.array([d.embedding for d in res.data])
-    scores = np.dot(batch_vecs, anchor_vec)
-    all_scores.extend(scores)
+    return np.array(res.data[0].embedding)
 
-    if len(all_scores) % 1024 == 0:
-        print(f"Progress: {len(all_scores)} / {len(texts)} analyzed...")
 
-df['aesthetic_score'] = all_scores
+def score_texts(client: Mixedbread, texts: list[str], anchor_vec: np.ndarray) -> list[float]:
+    """
+    Batch-encode all review texts and compute cosine similarity against the anchor.
+    Returns a list of scores in the same order as `texts`.
+    """
+    all_scores: list[float] = []
 
-# 6. Mark the "Disruptive Item"
-df['is_disruptive'] = df['aesthetic_score'] > 0.6
-df.to_json("diderot_final_scored.jsonl", orient="records", lines=True)
+    for i in range(0, len(texts), EMBEDDING_BATCH_SIZE):
+        batch = texts[i : i + EMBEDDING_BATCH_SIZE]
+        res = client.embed(
+            model=EMBEDDING_MODEL,
+            input=batch,
+            normalized=True,
+            encoding_format="float",
+        )
+        batch_vecs = np.array([d.embedding for d in res.data])
+        scores = np.dot(batch_vecs, anchor_vec).tolist()
+        all_scores.extend(scores)
 
-print("Analysis Complete! Data saved with Semantic Scores.")
+        if len(all_scores) % 1024 == 0:
+            logger.info(f"Progress: {len(all_scores):,} / {len(texts):,} reviews scored")
+
+    return all_scores
+
+
+def main():
+    api_key = os.getenv("MIXEDBREAD_API_KEY")
+    if not api_key:
+        raise EnvironmentError(
+            "MIXEDBREAD_API_KEY is not set. Add it to your .env file."
+        )
+
+    if not os.path.exists(INPUT_FILE):
+        raise FileNotFoundError(
+            f"Input file not found: {INPUT_FILE}. Run diderot_sequential_sorting.py first."
+        )
+
+    client = Mixedbread(api_key=api_key)
+
+    logger.info("Encoding aesthetic anchor...")
+    anchor_vec = get_anchor_embedding(client)
+
+    logger.info(f"Loading reviews from: {INPUT_FILE}")
+    df = pd.read_json(INPUT_FILE, lines=True)
+    texts = df["text"].fillna("").tolist()
+
+    logger.info(f"Scoring {len(texts):,} reviews in batches of {EMBEDDING_BATCH_SIZE}...")
+    df["aesthetic_score"] = score_texts(client, texts, anchor_vec)
+
+    df["is_disruptive"] = df["aesthetic_score"] > AESTHETIC_THRESHOLD
+
+    df.to_json(OUTPUT_FILE, orient="records", lines=True)
+    logger.info(f"Saved scored data to: {OUTPUT_FILE}")
+    logger.info(
+        f"Disruptive reviews: {df['is_disruptive'].sum():,} "
+        f"({df['is_disruptive'].mean():.1%} of total)"
+    )
+
+
+if __name__ == "__main__":
+    main()

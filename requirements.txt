@@ -1,9 +1,10 @@
-mixedbread-ai==1.2.0
+mixedbread
 pandas==2.2.1
 numpy==1.26.4
 matplotlib==3.8.3
 seaborn==0.13.2
-statsmodels==0.14.1
 spacy==3.7.4
 sentence-transformers==2.5.1
+ruptures
+lifelines
 python-dotenv==1.0.1
