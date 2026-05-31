@@ -27,7 +27,7 @@ STAGES = [
     ("content",     "content_analysis",         "Keyword content analysis"),
     ("changepoint", "changepoint_analysis",     "Bayesian change point detection"),
     ("survival",    "survival_analysis",        "Cox proportional hazards model"),
-    ("visualize",   "diderot_analysis",         "Thesis visualizations"),
+    ("visualize",   "visualizations",            "Thesis visualizations"),
 ]
 
 STAGE_NAMES = [s[0] for s in STAGES]
